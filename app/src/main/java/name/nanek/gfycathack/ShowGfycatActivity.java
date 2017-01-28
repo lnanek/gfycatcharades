@@ -6,6 +6,7 @@ import android.widget.TextView;
 
 import java.util.List;
 
+import name.nanek.gfycathack.network.GfycatServiceFactory;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -13,6 +14,8 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ShowGfycatActivity extends AppCompatActivity {
+
+    GfycatService api = GfycatServiceFactory.get();
 
     TextView textView;
 
@@ -22,14 +25,38 @@ public class ShowGfycatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_show_gfycat);
         textView = (TextView) findViewById(R.id.textView);
 
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://api.gfycat.com/")
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+        showTrendingGfycat();
+    }
 
-        GfycatService service = retrofit.create(GfycatService.class);
+    private void showTrendingGfycat() {
+        Call<TrendingResponse> tags = api.trendingGfycats(10);
+        tags.enqueue(new Callback<TrendingResponse>() {
+            @Override
+            public void onResponse(Call<TrendingResponse> call, Response<TrendingResponse> response) {
+                showTrendingGfycatResponse(response.body());
+            }
 
-        Call<List<String>> tags = service.trending(10);
+            @Override
+            public void onFailure(Call<TrendingResponse> call, Throwable t) {
+                textView.setText("Error: " + t);
+            }
+        });
+    }
+
+    private void showTrendingGfycatResponse(TrendingResponse response) {
+        if (null == response) {
+            textView.setText("no response");
+        }
+
+        if ( response.gfycats.isEmpty() ) {
+            textView.setText("empty response");
+        }
+
+        textView.setText("gfycat: " + response.gfycats.get(0));
+    }
+
+    private void showTrendingTags() {
+        Call<List<String>> tags = api.trendingTags(10);
         tags.enqueue(new Callback<List<String>>() {
             @Override
             public void onResponse(Call<List<String>> call, Response<List<String>> response) {
@@ -41,6 +68,5 @@ public class ShowGfycatActivity extends AppCompatActivity {
                 textView.setText("Error: " + t);
             }
         });
-
     }
 }
