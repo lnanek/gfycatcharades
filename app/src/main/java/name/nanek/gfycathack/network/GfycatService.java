@@ -1,7 +1,8 @@
-package name.nanek.gfycathack;
+package name.nanek.gfycathack.network;
 
 import java.util.List;
 
+import name.nanek.gfycathack.models.TrendingResponse;
 import retrofit2.Call;
 import retrofit2.http.GET;
 import retrofit2.http.Query;
@@ -14,10 +15,12 @@ import retrofit2.http.Query;
 
 public interface GfycatService {
 
-    @GET("v1test/tags/trending")
+    @GET("tags/trending")
     Call<List<String>> trendingTags(@Query("tagCount") int tagCount);
 
-    @GET("v1test/gfycats/trending")
-    Call<TrendingResponse> trendingGfycats(@Query("count") int count);
+    @GET("gfycats/trending")
+    Call<TrendingResponse> trendingGfycats(
+            @Query("count") int count,
+            @Query("cursor") String cursor);
 
 }

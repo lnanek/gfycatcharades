@@ -1,4 +1,4 @@
-package name.nanek.gfycathack;
+package name.nanek.gfycathack.models;
 
 import java.util.List;
 

@@ -1,6 +1,5 @@
 package name.nanek.gfycathack.network;
 
-import name.nanek.gfycathack.GfycatService;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -18,7 +17,8 @@ public class GfycatServiceFactory {
 
     private static GfycatService create() {
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://api.gfycat.com/")
+                //.baseUrl("https://api.gfycat.com/v1/")
+                .baseUrl("https://api.gfycat.com/v1test/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
