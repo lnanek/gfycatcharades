@@ -1,5 +1,12 @@
 package name.nanek.gfycathack.network;
 
+import android.util.Log;
+
+import name.nanek.gfycathack.models.ClientCredentialsRequest;
+import name.nanek.gfycathack.models.ClientCredentialsResponse;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -8,6 +15,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 
 public class GfycatServiceFactory {
+
+    private static final String TAG = GfycatServiceFactory.class.getSimpleName();
 
     private static GfycatService INSTANCE = create();
 
@@ -23,6 +32,7 @@ public class GfycatServiceFactory {
                 .build();
 
         GfycatService service = retrofit.create(GfycatService.class);
+
         return service;
     }
 }
