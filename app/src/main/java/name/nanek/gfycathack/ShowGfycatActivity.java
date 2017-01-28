@@ -2,7 +2,11 @@ package name.nanek.gfycathack;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 
 import java.util.List;
 
@@ -19,11 +23,14 @@ public class ShowGfycatActivity extends AppCompatActivity {
 
     TextView textView;
 
+    ImageView imageView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_show_gfycat);
         textView = (TextView) findViewById(R.id.textView);
+        imageView = (ImageView) findViewById(R.id.imageView);
 
         showTrendingGfycat();
     }
@@ -53,6 +60,12 @@ public class ShowGfycatActivity extends AppCompatActivity {
         }
 
         textView.setText("gfycat: " + response.gfycats.get(0));
+
+        final String url = response.gfycats.get(0).max2mbGif;
+
+        Glide.with(this)
+                .load(url)
+                .into(new GlideDrawableImageViewTarget(imageView));
     }
 
     private void showTrendingTags() {

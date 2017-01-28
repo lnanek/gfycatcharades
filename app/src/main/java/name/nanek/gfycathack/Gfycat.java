@@ -52,11 +52,11 @@ public class Gfycat {
     public String toString() {
         return "Gfycat{" +
                 "gfyName='" + gfyName + '\'' +
-                ", gifUrl='" + gifUrl + '\'' +
-                ", tags=" + tags +
-                ", userName='" + userName + '\'' +
-                ", title='" + title + '\'' +
-                ", description='" + description + '\'' +
+                "\ngifUrl='" + gifUrl + '\'' +
+                "\ntags=" + tags +
+                "\nuserName='" + userName + '\'' +
+                "\ntitle='" + title + '\'' +
+                "\ndescription='" + description + '\'' +
                 '}';
     }
 }
