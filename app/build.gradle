@@ -6,7 +6,7 @@ android {
     defaultConfig {
         applicationId "name.nanek.gfycathack"
         minSdkVersion 18
-        targetSdkVersion 25
+        targetSdkVersion 22
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -33,6 +33,9 @@ dependencies {
     compile 'com.squareup.retrofit2:retrofit:+'
     //compile 'com.google.code.gson:gson:+'
     compile 'com.squareup.retrofit2:converter-gson:+'
+
+    //compile 'com.squareup.okhttp3:logging-interceptor:3.2.0'
+    compile 'com.squareup.okhttp3:logging-interceptor:3.3.1'
 
     compile 'com.github.bumptech.glide:glide:3.7.0'
 

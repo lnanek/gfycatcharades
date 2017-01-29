@@ -5,7 +5,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -15,18 +17,34 @@ import android.view.View;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 
+import java.io.File;
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.List;
 
 import name.nanek.gfycathack.databinding.ActivityShowGfycatBinding;
 import name.nanek.gfycathack.models.ClientCredentialsRequest;
 import name.nanek.gfycathack.models.ClientCredentialsResponse;
 import name.nanek.gfycathack.models.PrepareUploadResponse;
+import name.nanek.gfycathack.models.RequestBodyUtil;
 import name.nanek.gfycathack.models.TrendingResponse;
 import name.nanek.gfycathack.network.GfycatService;
 import name.nanek.gfycathack.network.GfycatServiceFactory;
+import name.nanek.gfycathack.network.UploadService;
+import name.nanek.gfycathack.network.UploadServiceFactory;
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+
+import static android.provider.MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO;
 
 public class ShowGfycatActivity extends AppCompatActivity {
 
@@ -34,8 +52,11 @@ public class ShowGfycatActivity extends AppCompatActivity {
 
     static final String TAG = ShowGfycatActivity.class.getSimpleName();
 
-    static final String DEBUG_SKIP_RECORD_URL =
-            "content://media/external/video/media/9250";
+    static String strSDCardPathName =
+            //        Environment.getExternalStorageDirectory() + "/";
+            "/sdcard/";
+
+    static String strFileName = "";
 
     GfycatService api = GfycatServiceFactory.get();
 
@@ -73,7 +94,7 @@ public class ShowGfycatActivity extends AppCompatActivity {
         binding.startRecordingButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dispatchTakeVideoIntent();
+                startCameraRecording();
             }
         });
 
@@ -81,6 +102,7 @@ public class ShowGfycatActivity extends AppCompatActivity {
     }
 
     private void login() {
+        Log.d(TAG, "login");
 
         showLoadingDialog();
 
@@ -106,6 +128,8 @@ public class ShowGfycatActivity extends AppCompatActivity {
     }
 
     private void showLoadingDialog() {
+        Log.d(TAG, "showLoadingDialog");
+
         dialog = new ProgressDialog(this); // this = YourActivity
         dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
         dialog.setMessage("Loading. Please wait...");
@@ -115,11 +139,15 @@ public class ShowGfycatActivity extends AppCompatActivity {
     }
 
     private void hideLoadingDialog() {
+        Log.d(TAG, "hideLoadingDialog");
+
         dialog.hide();
         dialog = null;
     }
 
     private void showErrorDialog(String error) {
+        Log.d(TAG, "showErrorDialog error = " + error);
+
         new AlertDialog.Builder(this).setTitle(error)
                 .setOnDismissListener(new DialogInterface.OnDismissListener() {
                     @Override
@@ -186,16 +214,16 @@ public class ShowGfycatActivity extends AppCompatActivity {
         });
     }
 
-    private void dispatchTakeVideoIntent() {
-        Log.d(TAG, "dispatchTakeVideoIntent");
-
-        if (null != DEBUG_SKIP_RECORD_URL) {
-            Uri uri = Uri.parse(DEBUG_SKIP_RECORD_URL);
-            uploadVideo(uri);
-            return;
-        }
+    private void startCameraRecording() {
+        Log.d(TAG, "startCameraRecording");
 
         Intent takeVideoIntent = new Intent(MediaStore.ACTION_VIDEO_CAPTURE);
+
+        Uri fileUri = getOutputMediaFileUri(MEDIA_TYPE_VIDEO);
+        takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
+        takeVideoIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
+//        startActivityForResult(takeVideoIntent, REQUEST_VIDEO_CAPTURE);
+
         if (takeVideoIntent.resolveActivity(getPackageManager()) != null) {
             startActivityForResult(takeVideoIntent, REQUEST_VIDEO_CAPTURE);
         }
@@ -209,17 +237,20 @@ public class ShowGfycatActivity extends AppCompatActivity {
             Uri videoUri = intent.getData();
             Log.d(TAG, "videoUri = " + videoUri);
             //mVideoView.setVideoURI(videoUri);
+            prepareToUploadFile();
+
         }
     }
 
-    private void uploadVideo(Uri uri) {
-        Log.d(TAG, "uploadVideo uri = " + uri);
+    private void prepareToUploadFile() {
+        Log.d(TAG, "prepareToUploadFile");
 
         Call<PrepareUploadResponse> prepare = api.prepareUpload(authToken);
         prepare.enqueue(new Callback<PrepareUploadResponse>() {
             @Override
             public void onResponse(Call<PrepareUploadResponse> call, Response<PrepareUploadResponse> response) {
                 Log.d(TAG, "prepare response: " + response.body());
+                uploadFile(response.body().uploadType, response.body().gfyname);
             }
 
             @Override
@@ -228,6 +259,130 @@ public class ShowGfycatActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void uploadFile(String uploadType, String gfyname) {
+        Log.d(TAG, "uploadFile" +
+                " uploadType = " + uploadType +
+                ", gfyname = " + gfyname);
+
+        try {
+            InputStream in = new FileInputStream(new File(strSDCardPathName + strFileName));
+            byte[] buf;
+            buf = new byte[in.available()];
+            while (in.read(buf) != -1) ;
+            RequestBody requestBody = RequestBody
+                    .create(MediaType.parse("video/mp4"), buf);
+
+            UploadService service = UploadServiceFactory.create("https://" + uploadType + "/");
+            Call<Void> call = service.uploadPhoto(/*authToken, */gfyname, requestBody);
+            call.enqueue(new Callback<Void>() {
+                @Override
+                public void onResponse(Call<Void> call, Response<Void> response) {
+                    Log.d(TAG, "uploadFile success: " + response);
+                }
+
+                @Override
+                public void onFailure(Call<Void> call, Throwable t) {
+                    Log.d(TAG, "uploadFile onFailure", t);
+                    showErrorDialog("Error Uploading");
+                }
+            });
+
+
+        } catch (Throwable t) {
+            Log.e(TAG, "error uploading file", t);
+        }
+
+    }
+
+    private void uploadFile2(String uploadType, String gfyname) {
+        Log.d(TAG, "uploadFile" +
+                " uploadType = " + uploadType +
+                ", gfyname = " + gfyname);
+
+        try {
+
+            OkHttpClient client = new OkHttpClient();
+
+            MediaType mediaType = MediaType.parse("video/mp4");
+
+            //InputStream inputStream = getAssets().open("README.md");
+
+            //InputStream inputStream = getContentResolver().openInputStream(uri);
+
+            //InputStream inputStream = getSourceStream(uri);
+
+            FileInputStream inputStream = new FileInputStream(new File(strSDCardPathName + strFileName));
+
+            RequestBody requestBody = RequestBodyUtil.create(mediaType, inputStream);
+            Request request = new Request.Builder()
+                    .url("https://" + uploadType + "/" + gfyname)
+                    .post(requestBody)
+                    .build();
+
+            client.newCall(request).enqueue(new okhttp3.Callback() {
+                @Override
+                public void onFailure(okhttp3.Call call, IOException e) {
+                    Log.e(TAG, "uploadFile onFailure", e);
+                }
+
+                @Override
+                public void onResponse(okhttp3.Call call, okhttp3.Response response) throws IOException {
+                    Log.d(TAG, "uploadFile onResponse:" + response.body().string());
+                    showErrorDialog("Error Uploading");
+                }
+            });
+
+
+/*
+        okhttp3.Response response = client.newCall(request).execute();
+        if (!response.isSuccessful())
+            throw new IOException("Unexpected code " + response);
+
+        Log.d("POST", response.body().string());
+*/
+
+        } catch (Throwable t) {
+            Log.e(TAG, "error uploading file", t);
+        }
+    }
+
+    FileInputStream getSourceStream(Uri u) throws FileNotFoundException {
+        FileInputStream out = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            ParcelFileDescriptor parcelFileDescriptor =
+                    this.getContentResolver().openFileDescriptor(u, "r");
+            FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+            out = new FileInputStream(fileDescriptor);
+        } else {
+            out = (FileInputStream) this.getContentResolver().openInputStream(u);
+        }
+        return out;
+    }
+
+    private static Uri getOutputMediaFileUri(int type) {
+        return Uri.fromFile(getOutputMediaFile(type));
+    }
+
+    private static File getOutputMediaFile(int type) {
+
+        // Generate File Name
+        java.util.Date date = new java.util.Date();
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(date.getTime());
+
+        strFileName = "Clip_" + timeStamp + ".mp4";
+
+        File mediaFile;
+
+        if (type == MEDIA_TYPE_VIDEO) {
+            mediaFile = new File(strSDCardPathName + strFileName);
+        } else {
+            return null;
+        }
+
+        Log.d(TAG, "getOutputMediaFile returning: " + mediaFile);
+        return mediaFile;
     }
 
 }
