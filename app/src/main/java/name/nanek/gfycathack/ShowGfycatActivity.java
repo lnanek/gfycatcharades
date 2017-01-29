@@ -36,6 +36,7 @@ import name.nanek.gfycathack.models.PrepareUploadResponse;
 import name.nanek.gfycathack.models.RequestBodyUtil;
 import name.nanek.gfycathack.models.TrendingResponse;
 import name.nanek.gfycathack.models.UploadStatus;
+import name.nanek.gfycathack.network.CuratedImageService;
 import name.nanek.gfycathack.network.GfycatService;
 import name.nanek.gfycathack.network.GfycatServiceFactory;
 import name.nanek.gfycathack.network.UploadService;
@@ -66,9 +67,11 @@ public class ShowGfycatActivity extends AppCompatActivity {
 
     GfycatService apiTest = GfycatServiceFactory.getTest();
 
+    CuratedImageService curatedImageService = new CuratedImageService();
+
     ActivityShowGfycatBinding binding;
 
-    String nextGifCursor;
+    //String nextGifCursor;
 
     ProgressDialog dialog;
 
@@ -176,6 +179,22 @@ public class ShowGfycatActivity extends AppCompatActivity {
 
         showLoadingDialog("Getting popular Gfycat...");
 
+        curatedImageService.getGfy(api, apiTest, authToken, new Callback<Gfycat>() {
+            @Override
+            public void onResponse(Call<Gfycat> call, Response<Gfycat> response) {
+                hideLoadingDialog();
+                showGfycat(response.body());
+            }
+
+            @Override
+            public void onFailure(Call<Gfycat> call, Throwable t) {
+                hideLoadingDialog();
+
+                showErrorDialog("Error Getting popular Gfycat.\n" + t);
+                binding.textView.setText("Error: " + t);
+            }
+        });
+        /*
         Call<TrendingResponse> tags = api.trendingGfycats(authToken, 10, nextGifCursor);
         tags.enqueue(new Callback<TrendingResponse>() {
             @Override
@@ -192,6 +211,7 @@ public class ShowGfycatActivity extends AppCompatActivity {
                 binding.textView.setText("Error: " + t);
             }
         });
+        */
     }
 
     private void showTrendingGfycatResponse(TrendingResponse response) {
@@ -202,7 +222,7 @@ public class ShowGfycatActivity extends AppCompatActivity {
             showErrorDialog("Error Getting popular Gfycat.");
         }
 
-        nextGifCursor = response.cursor;
+        //nextGifCursor = response.cursor;
 
         if (response.gfycats.isEmpty()) {
             binding.textView.setText("empty response");
@@ -228,7 +248,7 @@ public class ShowGfycatActivity extends AppCompatActivity {
         Log.d(TAG, "showRecordingGfycat gfycat = " + gfycat);
 
         binding.recordingView.setVisibility(View.VISIBLE);
-        
+
         final String url = gfycat.max2mbGif;
 
         Glide.with(this)
@@ -268,6 +288,9 @@ public class ShowGfycatActivity extends AppCompatActivity {
         // Use low quality for faster uploads
         takeVideoIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, VIDEO_QUALITY_LOW);
 //        startActivityForResult(takeVideoIntent, REQUEST_VIDEO_CAPTURE);
+
+        // 15 second limit
+        takeVideoIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 15);
 
         if (takeVideoIntent.resolveActivity(getPackageManager()) != null) {
             startActivityForResult(takeVideoIntent, REQUEST_VIDEO_CAPTURE);
