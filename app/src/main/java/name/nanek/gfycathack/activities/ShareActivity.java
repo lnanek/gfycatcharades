@@ -34,7 +34,7 @@ public class ShareActivity extends AppCompatActivity {
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 if (url.contains("gfycat2.html")) {
                     finish();
-                    
+
                     return true;
                 }
                 if (url.contains("gfycat3.html")) {

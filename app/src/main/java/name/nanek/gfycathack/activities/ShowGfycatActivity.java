@@ -106,10 +106,19 @@ public class ShowGfycatActivity extends AppCompatActivity {
             }
         });
 
+        setClickListener(null);
+
+        login();
+    }
+
+    private void setClickListener(final String gfyname) {
+        Log.d(TAG, "setClickListener gfyname: " + gfyname);
+
         binding.recordingView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(ShowGfycatActivity.this, ResultActivity.class);
+                intent.putExtra(ResultActivity.EXTRA_GFYNAME, gfyname);
                 startActivity(intent);
             }
         });
@@ -118,11 +127,10 @@ public class ShowGfycatActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(ShowGfycatActivity.this, ResultActivity.class);
+                intent.putExtra(ResultActivity.EXTRA_GFYNAME, gfyname);
                 startActivity(intent);
             }
         });
-
-        login();
     }
 
     private void login() {
@@ -248,6 +256,8 @@ public class ShowGfycatActivity extends AppCompatActivity {
     private void showGfycat(Gfycat gfycat) {
         Log.d(TAG, "showGfycat gfycat = " + gfycat);
 
+        setClickListener(gfycat.gfyName);
+
         final String url = gfycat.max2mbGif;
 
         Glide.with(this)
@@ -258,6 +268,8 @@ public class ShowGfycatActivity extends AppCompatActivity {
 
     private void showRecordingGfycat(Gfycat gfycat) {
         Log.d(TAG, "showRecordingGfycat gfycat = " + gfycat);
+
+        setClickListener(gfycat.gfyName);
 
         binding.recordingView.setVisibility(View.VISIBLE);
 
