@@ -106,6 +106,22 @@ public class ShowGfycatActivity extends AppCompatActivity {
             }
         });
 
+        binding.recordingView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ShowGfycatActivity.this, ResultActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        binding.imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(ShowGfycatActivity.this, ResultActivity.class);
+                startActivity(intent);
+            }
+        });
+
         login();
     }
 
