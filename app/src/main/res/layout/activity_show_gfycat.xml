@@ -24,6 +24,7 @@
         android:layout_height="wrap_content"
         android:text="Act Out This GfyCat!"
         android:paddingBottom="10dp"
+        android:textStyle="bold"
         android:textSize="22sp"/>
 
     <ImageView
@@ -41,21 +42,54 @@
         android:layout_weight="1"
         />
 
-    <Button
-        android:id="@+id/newGifButton"
-        android:layout_marginTop="10dp"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Skip"
-        android:textSize="22sp"/>
+        android:orientation="horizontal"
+        >
 
-    <Button
-        android:id="@+id/startRecordingButton"
-        android:layout_marginTop="10dp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Start Recording"
-        android:textSize="22sp"/>
+        <View
+            android:layout_width="0px"
+            android:layout_height="0px"
+            android:layout_weight="1"
+            />
+        <Button
+            android:id="@+id/newGifButton"
+            android:layout_marginTop="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:background="#000"
+            android:textColor="#FFF"
+            android:text="Skip"
+            android:textSize="22sp"/>
+
+        <View
+            android:layout_width="0px"
+            android:layout_height="0px"
+            android:layout_weight="1"
+            />
+
+        <Button
+            android:id="@+id/startRecordingButton"
+            android:layout_marginTop="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:background="#000"
+            android:textColor="#FFF"
+            android:text="Start Recording"
+            android:textSize="22sp"/>
+
+        <View
+            android:layout_width="0px"
+            android:layout_height="0px"
+            android:layout_weight="1"
+            />
+    </LinearLayout>
+
 
     <TextView
         android:id="@+id/textView"

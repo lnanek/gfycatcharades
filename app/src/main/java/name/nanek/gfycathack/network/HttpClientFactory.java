@@ -3,11 +3,15 @@ package name.nanek.gfycathack.network;
 import java.io.File;
 import java.util.concurrent.TimeUnit;
 
+import name.nanek.gfycathack.imageloading.DispatchingProgressListener;
+import name.nanek.gfycathack.imageloading.OkHttpProgressGlideModule;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
+
+import static name.nanek.gfycathack.imageloading.OkHttpProgressGlideModule.createInterceptor;
 
 /**
  * Created by lnanek on 1/29/17.
@@ -37,6 +41,9 @@ public class HttpClientFactory {
                 .readTimeout(5 * 60, TimeUnit.SECONDS)
                 .connectTimeout(5 * 60, TimeUnit.SECONDS)
                 .addInterceptor(interceptor)
+
+                .addInterceptor(createInterceptor(new DispatchingProgressListener()))
+
                 .build();
 
         return client;

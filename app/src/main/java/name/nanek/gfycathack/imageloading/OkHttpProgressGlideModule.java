@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
+import name.nanek.gfycathack.network.HttpClientFactory;
 import okhttp3.HttpUrl;
 import okhttp3.Interceptor;
 import okhttp3.MediaType;
@@ -44,12 +45,16 @@ public class OkHttpProgressGlideModule implements GlideModule {
 
     @Override
     public void registerComponents(Context context, Glide glide) {
-        OkHttpClient.Builder builder = new OkHttpClient.Builder();
-        builder.addInterceptor(createInterceptor(new DispatchingProgressListener()));
-        glide.register(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory(builder.build()));
+        //OkHttpClient.Builder builder = new OkHttpClient.Builder();
+        //OkHttpClient client = builder.build();
+
+        OkHttpClient client = HttpClientFactory.INSTANCE;
+
+        //builder.addInterceptor(createInterceptor(new DispatchingProgressListener()));
+        glide.register(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory(client));
     }
 
-    private static Interceptor createInterceptor(final ResponseProgressListener listener) {
+    public static Interceptor createInterceptor(final ResponseProgressListener listener) {
         return new Interceptor() {
             @Override public Response intercept(Interceptor.Chain chain) throws IOException {
                 Request request = chain.request();
@@ -79,62 +84,6 @@ public class OkHttpProgressGlideModule implements GlideModule {
     }
     public static void expect(String url, UIProgressListener listener) {
         DispatchingProgressListener.expect(url, listener);
-    }
-
-    private interface ResponseProgressListener {
-        void update(HttpUrl url, long bytesRead, long contentLength);
-    }
-
-    private static class DispatchingProgressListener implements ResponseProgressListener {
-        private static final Map<String, UIProgressListener> LISTENERS = new HashMap<>();
-        private static final Map<String, Long> PROGRESSES = new HashMap<>();
-
-        private final Handler handler;
-        DispatchingProgressListener() {
-            this.handler = new Handler(Looper.getMainLooper());
-        }
-
-        static void forget(String url) {
-            LISTENERS.remove(url);
-            PROGRESSES.remove(url);
-        }
-        static void expect(String url, UIProgressListener listener) {
-            LISTENERS.put(url, listener);
-        }
-
-        @Override public void update(HttpUrl url, final long bytesRead, final long contentLength) {
-            //System.out.printf("%s: %d/%d = %.2f%%%n", url, bytesRead, contentLength, (100f * bytesRead) / contentLength);
-            String key = url.toString();
-            final UIProgressListener listener = LISTENERS.get(key);
-            if (listener == null) {
-                return;
-            }
-            if (contentLength <= bytesRead) {
-                forget(key);
-            }
-            if (needsDispatch(key, bytesRead, contentLength, listener.getGranualityPercentage())) {
-                handler.post(new Runnable() {
-                    @Override public void run() {
-                        listener.onProgress(bytesRead, contentLength);
-                    }
-                });
-            }
-        }
-
-        private boolean needsDispatch(String key, long current, long total, float granularity) {
-            if (granularity == 0 || current == 0 || total == current) {
-                return true;
-            }
-            float percent = 100f * current / total;
-            long currentProgress = (long)(percent / granularity);
-            Long lastProgress = PROGRESSES.get(key);
-            if (lastProgress == null || currentProgress != lastProgress) {
-                PROGRESSES.put(key, currentProgress);
-                return true;
-            } else {
-                return false;
-            }
-        }
     }
 
     private static class OkHttpProgressResponseBody extends ResponseBody {

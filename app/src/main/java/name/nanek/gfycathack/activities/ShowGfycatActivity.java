@@ -3,7 +3,9 @@ package name.nanek.gfycathack.activities;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.TypedArray;
 import android.databinding.DataBindingUtil;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -234,6 +236,7 @@ public class ShowGfycatActivity extends AppCompatActivity {
 
         Glide.with(this)
                 .load(url)
+                .placeholder(getProgressBarIndeterminate())
                 .into(new GlideDrawableImageViewTarget(binding.imageView));
     }
 
@@ -246,6 +249,7 @@ public class ShowGfycatActivity extends AppCompatActivity {
 
         Glide.with(this)
                 .load(url)
+                .placeholder(getProgressBarIndeterminate())
                 .into(new GlideDrawableImageViewTarget(binding.recordingView));
     }
 
@@ -464,6 +468,16 @@ public class ShowGfycatActivity extends AppCompatActivity {
         });
     }
 
+    Drawable getProgressBarIndeterminate() {
+        final int[] attrs = {android.R.attr.indeterminateDrawable};
+        final int attrs_indeterminateDrawable_index = 0;
+        TypedArray a = obtainStyledAttributes(android.R.style.Widget_ProgressBar, attrs);
+        try {
+            return a.getDrawable(attrs_indeterminateDrawable_index);
+        } finally {
+            a.recycle();
+        }
+    }
 
 
 }
