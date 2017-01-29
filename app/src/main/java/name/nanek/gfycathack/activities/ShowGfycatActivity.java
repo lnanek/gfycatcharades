@@ -1,14 +1,12 @@
-package name.nanek.gfycathack;
+package name.nanek.gfycathack.activities;
 
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -19,21 +17,18 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 
 import java.io.File;
-import java.io.FileDescriptor;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
+import name.nanek.gfycathack.R;
 import name.nanek.gfycathack.databinding.ActivityShowGfycatBinding;
 import name.nanek.gfycathack.models.ClientCredentialsRequest;
 import name.nanek.gfycathack.models.ClientCredentialsResponse;
 import name.nanek.gfycathack.models.GetGfyResponse;
 import name.nanek.gfycathack.models.Gfycat;
 import name.nanek.gfycathack.models.PrepareUploadResponse;
-import name.nanek.gfycathack.models.RequestBodyUtil;
 import name.nanek.gfycathack.models.TrendingResponse;
 import name.nanek.gfycathack.models.UploadStatus;
 import name.nanek.gfycathack.network.CuratedImageService;
@@ -42,8 +37,6 @@ import name.nanek.gfycathack.network.GfycatServiceFactory;
 import name.nanek.gfycathack.network.UploadService;
 import name.nanek.gfycathack.network.UploadServiceFactory;
 import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;

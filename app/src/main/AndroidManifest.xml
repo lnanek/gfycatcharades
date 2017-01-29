@@ -15,7 +15,8 @@
         android:supportsRtl="true"
         android:largeHeap="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ShowGfycatActivity"
+
+        <activity android:name=".activities.SplashScreenActivity"
             android:screenOrientation="portrait"
             >
             <intent-filter>
@@ -23,6 +24,11 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <activity android:name=".activities.ShowGfycatActivity"
+            android:screenOrientation="portrait"
+            >
         </activity>
     </application>
 

@@ -15,7 +15,7 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="10dp"
-    tools:context="name.nanek.gfycathack.ShowGfycatActivity">
+    tools:context="name.nanek.gfycathack.activities.ShowGfycatActivity">
 
     <TextView
         android:id="@+id/titleView"
