@@ -4,6 +4,8 @@ import android.util.Log;
 
 import name.nanek.gfycathack.models.ClientCredentialsRequest;
 import name.nanek.gfycathack.models.ClientCredentialsResponse;
+import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -18,16 +20,27 @@ public class GfycatServiceFactory {
 
     private static final String TAG = GfycatServiceFactory.class.getSimpleName();
 
-    private static GfycatService INSTANCE = create();
+    private static GfycatService INSTANCE = create("https://api.gfycat.com/v1/");
+
+    private static GfycatService TEST_INSTANCE = create("https://api.gfycat.com/v1test/");
 
     public static GfycatService get() {
         return INSTANCE;
     }
 
-    private static GfycatService create() {
+    public static GfycatService getTest() {
+        return TEST_INSTANCE;
+    }
+
+    private static GfycatService create(String baseUrl) {
+
+        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
+        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
+
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://api.gfycat.com/v1/")
-                //.baseUrl("https://api.gfycat.com/v1test/")
+                .baseUrl(baseUrl)
+                .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 

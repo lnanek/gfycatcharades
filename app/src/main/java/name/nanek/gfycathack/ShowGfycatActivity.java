@@ -7,6 +7,7 @@ import android.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.support.v7.app.AlertDialog;
@@ -29,9 +30,12 @@ import java.util.List;
 import name.nanek.gfycathack.databinding.ActivityShowGfycatBinding;
 import name.nanek.gfycathack.models.ClientCredentialsRequest;
 import name.nanek.gfycathack.models.ClientCredentialsResponse;
+import name.nanek.gfycathack.models.GetGfyResponse;
+import name.nanek.gfycathack.models.Gfycat;
 import name.nanek.gfycathack.models.PrepareUploadResponse;
 import name.nanek.gfycathack.models.RequestBodyUtil;
 import name.nanek.gfycathack.models.TrendingResponse;
+import name.nanek.gfycathack.models.UploadStatus;
 import name.nanek.gfycathack.network.GfycatService;
 import name.nanek.gfycathack.network.GfycatServiceFactory;
 import name.nanek.gfycathack.network.UploadService;
@@ -60,6 +64,8 @@ public class ShowGfycatActivity extends AppCompatActivity {
 
     GfycatService api = GfycatServiceFactory.get();
 
+    GfycatService apiTest = GfycatServiceFactory.getTest();
+
     ActivityShowGfycatBinding binding;
 
     String nextGifCursor;
@@ -68,11 +74,15 @@ public class ShowGfycatActivity extends AppCompatActivity {
 
     String authToken;
 
+    Handler handler;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate");
 
         super.onCreate(savedInstanceState);
+
+        handler = new Handler();
 
         binding = DataBindingUtil.setContentView(this, R.layout.activity_show_gfycat);
 
@@ -189,21 +199,41 @@ public class ShowGfycatActivity extends AppCompatActivity {
 
         if (null == response) {
             binding.textView.setText("no response");
+            showErrorDialog("Error Getting popular Gfycat.");
         }
 
         nextGifCursor = response.cursor;
 
         if (response.gfycats.isEmpty()) {
             binding.textView.setText("empty response");
+            showErrorDialog("Error Getting popular Gfycat.");
         }
 
         binding.textView.setText("gfycat: " + response.gfycats.get(0));
 
-        final String url = response.gfycats.get(0).max2mbGif;
+        showGfycat(response.gfycats.get(0));
+    }
+
+    private void showGfycat(Gfycat gfycat) {
+        Log.d(TAG, "showGfycat gfycat = " + gfycat);
+
+        final String url = gfycat.max2mbGif;
 
         Glide.with(this)
                 .load(url)
                 .into(new GlideDrawableImageViewTarget(binding.imageView));
+    }
+
+    private void showRecordingGfycat(Gfycat gfycat) {
+        Log.d(TAG, "showRecordingGfycat gfycat = " + gfycat);
+
+        binding.recordingView.setVisibility(View.VISIBLE);
+        
+        final String url = gfycat.max2mbGif;
+
+        Glide.with(this)
+                .load(url)
+                .into(new GlideDrawableImageViewTarget(binding.recordingView));
     }
 
     private void showTrendingTags() {
@@ -223,6 +253,10 @@ public class ShowGfycatActivity extends AppCompatActivity {
         });
     }
 
+    private static final int VIDEO_QUALITY_HIGH = 1;
+
+    private static final int VIDEO_QUALITY_LOW = 0;
+
     private void startCameraRecording() {
         Log.d(TAG, "startCameraRecording");
 
@@ -230,7 +264,9 @@ public class ShowGfycatActivity extends AppCompatActivity {
 
         Uri fileUri = getOutputMediaFileUri(MEDIA_TYPE_VIDEO);
         takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, fileUri);
-        takeVideoIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
+
+        // Use low quality for faster uploads
+        takeVideoIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, VIDEO_QUALITY_LOW);
 //        startActivityForResult(takeVideoIntent, REQUEST_VIDEO_CAPTURE);
 
         if (takeVideoIntent.resolveActivity(getPackageManager()) != null) {
@@ -277,7 +313,7 @@ public class ShowGfycatActivity extends AppCompatActivity {
 
     }
 
-    private void uploadFile(String uploadType, String gfyname) {
+    private void uploadFile(String uploadType, final String gfyname) {
         Log.d(TAG, "uploadFile" +
                 " uploadType = " + uploadType +
                 ", gfyname = " + gfyname);
@@ -300,6 +336,8 @@ public class ShowGfycatActivity extends AppCompatActivity {
                 public void onResponse(Call<Void> call, Response<Void> response) {
                     Log.d(TAG, "uploadFile success: " + response);
                     hideLoadingDialog();
+
+                    checkStatus(gfyname);
                 }
 
                 @Override
@@ -316,7 +354,6 @@ public class ShowGfycatActivity extends AppCompatActivity {
         } catch (Throwable t) {
             Log.e(TAG, "error uploading file", t);
         }
-
     }
 
     private static Uri getOutputMediaFileUri(int type) {
@@ -342,5 +379,75 @@ public class ShowGfycatActivity extends AppCompatActivity {
         Log.d(TAG, "getOutputMediaFile returning: " + mediaFile);
         return mediaFile;
     }
+
+    private void checkStatus(final String gfyname) {
+        Log.d(TAG, "checkStatus gfyname = " + gfyname);
+
+        if (null == dialog) {
+            showLoadingDialog("Checking Status...");
+        }
+
+        Call<UploadStatus> prepare = api.getStatus(authToken, gfyname);
+        prepare.enqueue(new Callback<UploadStatus>() {
+            @Override
+            public void onResponse(Call<UploadStatus> call, Response<UploadStatus> response) {
+                Log.d(TAG, "Checking Status response: " + response.body());
+
+                hideLoadingDialog();
+
+                final String status = response.body().task;
+                if ("complete".equals(status)) {
+                    getUploadedGif(gfyname);
+                    return;
+                }
+
+                showLoadingDialog("Status: " + status + "...");
+
+                // Check again in 5 seconds
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        checkStatus(gfyname);
+                    }
+                }, 5000);
+            }
+
+            @Override
+            public void onFailure(Call<UploadStatus> call, Throwable t) {
+                Log.e(TAG, "error Checking Status", t);
+                hideLoadingDialog();
+                showErrorDialog("Error Checking Status.\n" + t);
+            }
+        });
+    }
+
+    private void getUploadedGif(final String gfyname) {
+        Log.d(TAG, "getUploadedGif gfyname = " + gfyname);
+
+        showLoadingDialog("Getting uploaded gfycat...");
+
+        Call<GetGfyResponse> prepare = apiTest.getGfy(authToken, gfyname);
+        prepare.enqueue(new Callback<GetGfyResponse>() {
+            @Override
+            public void onResponse(Call<GetGfyResponse> call, Response<GetGfyResponse> response) {
+                Log.d(TAG, "Getting uploaded gfycat response: " + response.body());
+
+                hideLoadingDialog();
+
+                binding.titleView.setText("You Uploaded:");
+
+                showRecordingGfycat(response.body().gfyItem);
+            }
+
+            @Override
+            public void onFailure(Call<GetGfyResponse> call, Throwable t) {
+                Log.e(TAG, "error Getting uploaded gfycat", t);
+                hideLoadingDialog();
+                showErrorDialog("Error Getting uploaded gfycat.\n" + t);
+            }
+        });
+    }
+
+
 
 }

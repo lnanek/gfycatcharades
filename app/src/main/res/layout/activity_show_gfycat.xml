@@ -18,11 +18,20 @@
     tools:context="name.nanek.gfycathack.ShowGfycatActivity">
 
     <TextView
+        android:id="@+id/titleView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Act Out This GfyCat!"
         android:paddingBottom="10dp"
         android:textSize="22sp"/>
+
+    <ImageView
+        android:id="@+id/recordingView"
+        android:layout_width="match_parent"
+        android:layout_height="0px"
+        android:layout_weight="1"
+        android:visibility="gone"
+        />
 
     <ImageView
         android:id="@+id/imageView"

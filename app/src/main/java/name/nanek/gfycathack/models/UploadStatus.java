@@ -14,4 +14,12 @@ public class UploadStatus {
 
     public String gfyname; // E.g. "BrokenKeyGenet"
 
+    @Override
+    public String toString() {
+        return "UploadStatus{" +
+                "task='" + task + '\'' +
+                ", time=" + time +
+                ", gfyname='" + gfyname + '\'' +
+                '}';
+    }
 }

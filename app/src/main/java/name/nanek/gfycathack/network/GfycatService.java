@@ -4,6 +4,7 @@ import java.util.List;
 
 import name.nanek.gfycathack.models.ClientCredentialsRequest;
 import name.nanek.gfycathack.models.ClientCredentialsResponse;
+import name.nanek.gfycathack.models.GetGfyResponse;
 import name.nanek.gfycathack.models.Gfycat;
 import name.nanek.gfycathack.models.PrepareUploadResponse;
 import name.nanek.gfycathack.models.TrendingResponse;
@@ -14,6 +15,7 @@ import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.Headers;
 import retrofit2.http.POST;
+import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 /**
@@ -46,10 +48,12 @@ public interface GfycatService {
 
     @GET("gfycats/fetch/status/{gfyname}")
     Call<UploadStatus> getStatus(
-            @Header("Authorization") String token);
+            @Header("Authorization") String token,
+            @Path("gfyname") String gfyname);
 
     @GET("gfycats/{gfyname}")
-    Call<Gfycat> getGfy(
-            @Header("Authorization") String token);
+    Call<GetGfyResponse> getGfy(
+            @Header("Authorization") String token,
+            @Path("gfyname") String gfyname);
 
 }
