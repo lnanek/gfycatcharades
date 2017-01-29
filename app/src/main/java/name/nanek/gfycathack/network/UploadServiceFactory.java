@@ -15,14 +15,10 @@ public class UploadServiceFactory {
 
     public static UploadService create(final String baseUrl) {
 
-        HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
-        interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
-
         Retrofit retrofit = new Retrofit.Builder()
                 //.baseUrl(baseUrl)
                 .baseUrl("https://filedrop.gfycat.com/")
-                .client(client)
+                .client(HttpClientFactory.INSTANCE)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
