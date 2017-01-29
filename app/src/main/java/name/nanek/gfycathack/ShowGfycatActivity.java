@@ -104,7 +104,7 @@ public class ShowGfycatActivity extends AppCompatActivity {
     private void login() {
         Log.d(TAG, "login");
 
-        showLoadingDialog();
+        showLoadingDialog("Logging in...");
 
         Call<ClientCredentialsResponse> credentialsCall =
                 api.getCredentials(new ClientCredentialsRequest());
@@ -122,17 +122,19 @@ public class ShowGfycatActivity extends AppCompatActivity {
             public void onFailure(Call<ClientCredentialsResponse> call, Throwable t) {
                 Log.d(TAG, "credentials error: ", t);
                 hideLoadingDialog();
-                showErrorDialog("Error logging in.");
+                showErrorDialog("Error logging in.\n" + t);
             }
         });
     }
 
-    private void showLoadingDialog() {
+    private void showLoadingDialog(String message) {
         Log.d(TAG, "showLoadingDialog");
+
+        hideLoadingDialog();
 
         dialog = new ProgressDialog(this); // this = YourActivity
         dialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
-        dialog.setMessage("Loading. Please wait...");
+        dialog.setMessage(message);
         dialog.setIndeterminate(true);
         dialog.setCanceledOnTouchOutside(false);
         dialog.show();
@@ -140,9 +142,10 @@ public class ShowGfycatActivity extends AppCompatActivity {
 
     private void hideLoadingDialog() {
         Log.d(TAG, "hideLoadingDialog");
-
-        dialog.hide();
-        dialog = null;
+        if ( null != dialog ) {
+            dialog.hide();
+            dialog = null;
+        }
     }
 
     private void showErrorDialog(String error) {
@@ -161,15 +164,21 @@ public class ShowGfycatActivity extends AppCompatActivity {
     private void showTrendingGfycat() {
         Log.d(TAG, "showTrendingGfycat");
 
+        showLoadingDialog("Getting popular Gfycat...");
+
         Call<TrendingResponse> tags = api.trendingGfycats(authToken, 10, nextGifCursor);
         tags.enqueue(new Callback<TrendingResponse>() {
             @Override
             public void onResponse(Call<TrendingResponse> call, Response<TrendingResponse> response) {
+                hideLoadingDialog();
                 showTrendingGfycatResponse(response.body());
             }
 
             @Override
             public void onFailure(Call<TrendingResponse> call, Throwable t) {
+                hideLoadingDialog();
+
+                showErrorDialog("Error Getting popular Gfycat.\n" + t);
                 binding.textView.setText("Error: " + t);
             }
         });
@@ -245,17 +254,24 @@ public class ShowGfycatActivity extends AppCompatActivity {
     private void prepareToUploadFile() {
         Log.d(TAG, "prepareToUploadFile");
 
+
+        showLoadingDialog("Preparing to upload video...");
+
         Call<PrepareUploadResponse> prepare = api.prepareUpload(authToken);
         prepare.enqueue(new Callback<PrepareUploadResponse>() {
             @Override
             public void onResponse(Call<PrepareUploadResponse> call, Response<PrepareUploadResponse> response) {
                 Log.d(TAG, "prepare response: " + response.body());
+
+                hideLoadingDialog();
                 uploadFile(response.body().uploadType, response.body().gfyname);
             }
 
             @Override
             public void onFailure(Call<PrepareUploadResponse> call, Throwable t) {
                 Log.e(TAG, "error calling prepare upload", t);
+                hideLoadingDialog();
+                showErrorDialog("Error Preparing to upload video.\n" + t);
             }
         });
 
@@ -265,6 +281,9 @@ public class ShowGfycatActivity extends AppCompatActivity {
         Log.d(TAG, "uploadFile" +
                 " uploadType = " + uploadType +
                 ", gfyname = " + gfyname);
+
+
+        showLoadingDialog("Uploading video...");
 
         try {
             InputStream in = new FileInputStream(new File(strSDCardPathName + strFileName));
@@ -280,12 +299,16 @@ public class ShowGfycatActivity extends AppCompatActivity {
                 @Override
                 public void onResponse(Call<Void> call, Response<Void> response) {
                     Log.d(TAG, "uploadFile success: " + response);
+                    hideLoadingDialog();
                 }
 
                 @Override
                 public void onFailure(Call<Void> call, Throwable t) {
                     Log.d(TAG, "uploadFile onFailure", t);
                     showErrorDialog("Error Uploading");
+                    hideLoadingDialog();
+
+                    showErrorDialog("Error Uploading video.\n" + t);
                 }
             });
 
@@ -294,71 +317,6 @@ public class ShowGfycatActivity extends AppCompatActivity {
             Log.e(TAG, "error uploading file", t);
         }
 
-    }
-
-    private void uploadFile2(String uploadType, String gfyname) {
-        Log.d(TAG, "uploadFile" +
-                " uploadType = " + uploadType +
-                ", gfyname = " + gfyname);
-
-        try {
-
-            OkHttpClient client = new OkHttpClient();
-
-            MediaType mediaType = MediaType.parse("video/mp4");
-
-            //InputStream inputStream = getAssets().open("README.md");
-
-            //InputStream inputStream = getContentResolver().openInputStream(uri);
-
-            //InputStream inputStream = getSourceStream(uri);
-
-            FileInputStream inputStream = new FileInputStream(new File(strSDCardPathName + strFileName));
-
-            RequestBody requestBody = RequestBodyUtil.create(mediaType, inputStream);
-            Request request = new Request.Builder()
-                    .url("https://" + uploadType + "/" + gfyname)
-                    .post(requestBody)
-                    .build();
-
-            client.newCall(request).enqueue(new okhttp3.Callback() {
-                @Override
-                public void onFailure(okhttp3.Call call, IOException e) {
-                    Log.e(TAG, "uploadFile onFailure", e);
-                }
-
-                @Override
-                public void onResponse(okhttp3.Call call, okhttp3.Response response) throws IOException {
-                    Log.d(TAG, "uploadFile onResponse:" + response.body().string());
-                    showErrorDialog("Error Uploading");
-                }
-            });
-
-
-/*
-        okhttp3.Response response = client.newCall(request).execute();
-        if (!response.isSuccessful())
-            throw new IOException("Unexpected code " + response);
-
-        Log.d("POST", response.body().string());
-*/
-
-        } catch (Throwable t) {
-            Log.e(TAG, "error uploading file", t);
-        }
-    }
-
-    FileInputStream getSourceStream(Uri u) throws FileNotFoundException {
-        FileInputStream out = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            ParcelFileDescriptor parcelFileDescriptor =
-                    this.getContentResolver().openFileDescriptor(u, "r");
-            FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
-            out = new FileInputStream(fileDescriptor);
-        } else {
-            out = (FileInputStream) this.getContentResolver().openInputStream(u);
-        }
-        return out;
     }
 
     private static Uri getOutputMediaFileUri(int type) {

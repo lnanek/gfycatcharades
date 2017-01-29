@@ -26,8 +26,8 @@ public class GfycatServiceFactory {
 
     private static GfycatService create() {
         Retrofit retrofit = new Retrofit.Builder()
-                //.baseUrl("https://api.gfycat.com/v1/")
-                .baseUrl("https://api.gfycat.com/v1test/")
+                .baseUrl("https://api.gfycat.com/v1/")
+                //.baseUrl("https://api.gfycat.com/v1test/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
