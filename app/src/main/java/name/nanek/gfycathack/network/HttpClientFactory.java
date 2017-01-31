@@ -34,7 +34,7 @@ public class HttpClientFactory {
         HttpLoggingInterceptor interceptor = new HttpLoggingInterceptor();
         interceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
         OkHttpClient client = new OkHttpClient.Builder()
-                .cache(createCacheForOkHTTP())
+                //.cache(createCacheForOkHTTP())
                 .followRedirects(true)
                 .followSslRedirects(true)
                 .writeTimeout(5 * 60, TimeUnit.SECONDS)
